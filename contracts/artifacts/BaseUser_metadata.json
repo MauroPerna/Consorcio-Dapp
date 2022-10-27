@@ -1,0 +1,75 @@
+{
+	"compiler": {
+		"version": "0.8.17+commit.8df45f5f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "newName",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "newAddress",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"inputs": [],
+				"name": "withdrawAddress",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/BaseUser.sol": "BaseUser"
+		},
+		"evmVersion": "byzantium",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/BaseUser.sol": {
+			"keccak256": "0x4092f0f06a61b20e0056614fa39464a83a2dab9b23353a6e6a3227c66273a833",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c0d959533f91e41ba560fbb3ac3c649b2c561a4dd5983446e38b6bdd892370f5",
+				"dweb:/ipfs/QmVdD8KkQtqKJBQDzSQvHYBELQ5H8FNpTt2SbbV1JwKYxq"
+			]
+		}
+	},
+	"version": 1
+}
