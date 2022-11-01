@@ -2,11 +2,15 @@
 pragma solidity ^0.8.17;
 
 import "./BaseUser.sol";
+import "./Consorcio.sol";
+import "./Employee.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Tenant is BaseUser, Ownable {
 
-    address private consorcioAddress;
+    Consorcio private consorcioContractInstance;
+    Employee private employeeContractInstance;
+    uint private qTenant = 0;
 
     event ExpensesPaid(uint pricePaid);
     event EtherReceived(uint amount);
@@ -18,7 +22,7 @@ contract Tenant is BaseUser, Ownable {
         address tenantAddress;
         uint rentalCost;
         string residence;
-        address consorcioContractAddress;
+        Consorcio consorcioContractAddress;
     }
 
     modifier onlyPayers() {
@@ -27,11 +31,12 @@ contract Tenant is BaseUser, Ownable {
         
     }
 
-    receive() external payable {}
-    fallback() external payable {}
+    receive() external override payable {}
+    fallback() external override payable {}
 
-    constructor (address _consorcioAddress) payable BaseUser ("", 0x0000000000000000000000000000000000000000)  {
-        consorcioAddress = _consorcioAddress;
+    constructor (address payable _consorcioContractInstance, address payable _employeeContractInstance) payable BaseUser ("", 0x0000000000000000000000000000000000000000)  {
+        consorcioContractInstance = Consorcio(_consorcioContractInstance);
+        employeeContractInstance = Employee(_employeeContractInstance);
     }
 
     function deposit() public payable onlyPayers{
@@ -41,8 +46,15 @@ contract Tenant is BaseUser, Ownable {
     }
 
 
+    function getTotalCostForPayers() public view returns(uint totalCostForPayers, uint totalCost) {
+        uint totalAmount = consorcioContractInstance.getTotalAmountForService() + employeeContractInstance.getTotalAmountForSalaries();
+        return (totalAmount / qTenant, totalAmount);
+    }
+
+
     function addNewTenant(string memory _name, address _tenantAddress, uint _rentalCost, string memory _residence) public onlyOwner {
-        tenantMapping[_tenantAddress] = TenantStruct(_name, _tenantAddress, _rentalCost, _residence, consorcioAddress);
+        tenantMapping[_tenantAddress] = TenantStruct(_name, _tenantAddress, _rentalCost, _residence, consorcioContractInstance);
+        qTenant++;
     }
 
 
@@ -52,7 +64,7 @@ contract Tenant is BaseUser, Ownable {
             tenantMapping[_tenantAddress].tenantAddress,
             tenantMapping[_tenantAddress].rentalCost,
             tenantMapping[_tenantAddress].residence,
-            tenantMapping[_tenantAddress].consorcioContractAddress
+            address(tenantMapping[_tenantAddress].consorcioContractAddress)
         );
     }
 
@@ -61,25 +73,23 @@ contract Tenant is BaseUser, Ownable {
     }
 
     function payExpenses() public payable onlyPayers{
-        uint rentalCost = tenantMapping[msg.sender].rentalCost;
+        (uint rentalCost,) = getTotalCostForPayers();
         require(msg.value >= rentalCost, "The funds sent are insufficient");
-        (bool sent,) = consorcioAddress.call {
+        (bool sent,) = address(consorcioContractInstance).call {
             value: msg.value
         }("");
         require(sent == true, "Fallo la transferencia");
         emit ExpensesPaid(rentalCost);
     }
 
-    function payExpensesForOwner() public payable onlyOwner{
-        // TODO: llamar a las funciones getTotalAmountForService() y
-        // getTotalAmountForSalaries() del contrato Consorcio.sol 
-        // y determinar si el balance del contrato es superior a dicha suma.
-        require(address(this).balance > 0, "The funds sent are insufficient");
-        (bool sent,) = consorcioAddress.call {
-            value: address(this).balance
+    function payExpensesOwner() public payable onlyOwner{
+        (, uint totalCost) = getTotalCostForPayers();
+        require(address(this).balance > totalCost, "The funds sent are insufficient");
+        (bool sent,) = address(consorcioContractInstance).call {
+            value: totalCost
         }("");
         require(sent == true, "Fallo la transferencia");
-        emit ExpensesPaid(address(this).balance);
+        emit ExpensesPaid(totalCost);
     }
 
 }   

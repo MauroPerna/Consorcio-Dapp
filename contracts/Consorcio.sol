@@ -16,31 +16,22 @@ contract Consorcio is Ownable {
     }
 
     Service private serviceContractInstance;
+    Employee private employeeContractInstance;
 
-    Employee[] private employeeList;
-    // Tenant[] private tenantList;
     ServiceStruct[] private serviceList;
 
     receive() external payable {}
     fallback() external payable {}
 
-    constructor() {
+    constructor(address payable _employeeAddress) {
         serviceContractInstance = new Service();
+        employeeContractInstance = Employee(_employeeAddress);
     }
 
 
     modifier paid() {
         _;
         emit PaymentSucessfully(msg.sender, msg.value);
-    }
-
-
-    function getTotalAmountForSalaries() public view returns(uint){
-        uint amount = 0;
-        for(uint i = 0; i < employeeList.length; i++) {
-            amount += employeeList[i].salary();
-        }
-        return amount;
     }
 
 
@@ -57,13 +48,16 @@ contract Consorcio is Ownable {
         return serviceList[index].price;
     }
 
+    function getSalaries() public view returns(uint salaries){
+        return employeeContractInstance.getTotalAmountForSalaries();
+    }
+
 
     function paySalaries() public payable onlyOwner paid{
-        require(address(this).balance >= getTotalAmountForSalaries(), "The balance of the contract is insufficient");
-        for(uint i = 0; i < employeeList.length; i++) {
-            (bool success,) = address(employeeList[i].withdrawAddress()).call{value: employeeList[i].salary()}("");
-            require(success, "Transfer failed.");
-        }
+        uint totalAmount = employeeContractInstance.getTotalAmountForSalaries();
+        require(address(this).balance >=  totalAmount, "The balance of the contract is insufficient");
+        (bool success,) = address(employeeContractInstance).call{value: totalAmount}("");
+        require(success, "Transfer failed.");
     }
 
     function payAllServices() public payable onlyOwner paid{
@@ -78,14 +72,6 @@ contract Consorcio is Ownable {
         require(address(this).balance >= amount, "The balance of the contract is insufficient");
         (bool success,) = address(serviceContractInstance).call{value: amount}("");
         require(success, "Transfer failed.");
-    }
-
-    // function addNewTenant(string memory _name, address _tenantAddress, uint _rentalCost, string memory _residence) public onlyOwner {
-    //     tenantList.push(new Tenant(_name, _tenantAddress, _rentalCost, _residence, address(this)));
-    // }
-
-    function addNewEmployee(string memory _name, address _employeeAddress, string memory _profession, uint _salary) public onlyOwner {
-        employeeList.push(new Employee(_name, _employeeAddress, _profession, _salary));
     }
 
     function addNewService(string memory _name, uint _price) public onlyOwner {
